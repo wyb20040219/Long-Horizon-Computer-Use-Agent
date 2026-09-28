@@ -1,0 +1,7 @@
+[
+  {"id": "find-text", "goal": "Open a web page and find specified text"},
+  {"id": "extract-info", "goal": "Search a topic and extract information"},
+  {"id": "multi-page", "goal": "Navigate multiple pages and save a summary"},
+  {"id": "recover", "goal": "Recover from a failed page operation"},
+  {"id": "resume", "goal": "Resume an interrupted task from a checkpoint"}
+]
