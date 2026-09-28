@@ -41,7 +41,7 @@ class AgentRuntime:
 
     def _registry(self, run_id: str) -> ActionRegistry:
         run_dir = self.store.run_dir(run_id)
-        self.browser = BrowserController(self.config.allowed_domains, run_dir / "screenshots", mock=self.config.dry_run, headless=self.config.headless)
+        self.browser = BrowserController(self.config.allowed_domains, run_dir / "screenshots", mock=self.config.dry_run, headless=self.config.headless, failure_budget=self.config.mock_failures)
         return ActionRegistry(self.browser, DesktopController(run_dir / "screenshots"), FileSystemController(self.config.workspace, self.config.protected_paths))
 
     def new_state(self, goal: str) -> AgentState:

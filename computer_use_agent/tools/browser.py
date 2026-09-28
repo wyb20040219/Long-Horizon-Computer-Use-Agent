@@ -11,7 +11,7 @@ from .base import Observable
 class BrowserController(Observable):
     """Playwright adapter with a zero-dependency deterministic mock mode."""
 
-    def __init__(self, allowed_domains: tuple[str, ...], screenshots_dir: Path, mock: bool = False, headless: bool = True):
+    def __init__(self, allowed_domains: tuple[str, ...], screenshots_dir: Path, mock: bool = False, headless: bool = True, failure_budget: dict[str, int] | None = None):
         self.allowed_domains = allowed_domains
         self.screenshots_dir = screenshots_dir
         self.mock = mock
@@ -20,6 +20,7 @@ class BrowserController(Observable):
         self._mock_url = "about:blank"
         self._mock_title = ""
         self._mock_text = ""
+        self.failure_budget = dict(failure_budget or {})
 
     def _allowed(self, url: str) -> bool:
         host = (urlparse(url).hostname or "").lower()
@@ -38,6 +39,9 @@ class BrowserController(Observable):
 
     def execute(self, action: str, **args: object) -> ActionResult:
         try:
+            if self.mock and self.failure_budget.get(action, 0) > 0:
+                self.failure_budget[action] -= 1
+                return ActionResult(False, f"Injected transient failure: {action}", error="mock transient failure")
             if action == "open_url":
                 url = str(args["url"])
                 if not self._allowed(url):

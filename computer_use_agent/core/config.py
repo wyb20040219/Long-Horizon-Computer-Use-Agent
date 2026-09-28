@@ -18,6 +18,7 @@ class AgentConfig:
     dry_run: bool = False
     auto_approve: bool = False
     checkpoint_every: int = 1
+    mock_failures: dict[str, int] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.workspace = self.workspace.resolve()

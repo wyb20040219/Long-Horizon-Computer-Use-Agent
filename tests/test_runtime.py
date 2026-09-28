@@ -24,3 +24,12 @@ def test_resume_completed_run_is_idempotent(tmp_path):
     resumed = AgentRuntime(config).run(resume_id=first.run_id)
     assert resumed.status == TaskStatus.COMPLETED
     assert resumed.current_step == 3
+
+
+def test_runtime_recovers_from_one_transient_failure(tmp_path):
+    config = AgentConfig(workspace=tmp_path, dry_run=True, auto_approve=True, mock_failures={"open_url": 1})
+    state = AgentRuntime(config).run(goal="recover")
+    assert state.status == TaskStatus.COMPLETED
+    assert state.current_step == 4
+    assert state.todos[0].retry_count == 1
+    assert len(state.failed_actions) == 1

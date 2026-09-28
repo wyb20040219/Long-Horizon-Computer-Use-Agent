@@ -1,7 +1,7 @@
 [
-  {"id": "find-text", "goal": "Open a web page and find specified text"},
-  {"id": "extract-info", "goal": "Search a topic and extract information"},
-  {"id": "multi-page", "goal": "Navigate multiple pages and save a summary"},
-  {"id": "recover", "goal": "Recover from a failed page operation"},
-  {"id": "resume", "goal": "Resume an interrupted task from a checkpoint"}
+  {"id": "find-text", "scenario": "standard", "goal": "Open a web page and find specified text"},
+  {"id": "extract-info", "scenario": "standard", "goal": "Search a topic and extract information"},
+  {"id": "multi-page", "scenario": "standard", "goal": "Navigate multiple pages and save a summary"},
+  {"id": "recover", "scenario": "transient_failure", "goal": "Recover from a failed page operation"},
+  {"id": "resume", "scenario": "resume", "goal": "Resume an interrupted task from a checkpoint"}
 ]
