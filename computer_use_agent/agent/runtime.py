@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import time
 import uuid
+import json
+import os
 from dataclasses import asdict
 from typing import Callable
 
@@ -18,13 +20,19 @@ from .context_manager import ContextManager
 from .planner import TaskPlanner
 from .recovery import RecoveryPolicy
 from .verifier import Verifier
+from ..llm.client import OpenAICompatibleClient
 
 
 class AgentRuntime:
-    def __init__(self, config: AgentConfig, approval_handler: Callable[[Action], bool] | None = None):
+    def __init__(self, config: AgentConfig, approval_handler: Callable[[Action], bool] | None = None, planner: TaskPlanner | None = None):
         self.config = config
         self.store = CheckpointStore(config.runs_dir)
-        self.planner = TaskPlanner()
+        if planner is not None:
+            self.planner = planner
+        elif os.getenv("OPENAI_API_KEY") and not config.dry_run:
+            self.planner = TaskPlanner(OpenAICompatibleClient())
+        else:
+            self.planner = TaskPlanner()
         self.verifier = Verifier()
         self.recovery = RecoveryPolicy(config.max_retries)
         self.context = ContextManager()
@@ -35,8 +43,14 @@ class AgentRuntime:
         if self.config.auto_approve: return True
         choice = input(f"Approve {action.name} {action.arguments}? [approve/reject/modify]: ").strip().lower()
         if choice == "modify":
-            print("Modification is conservative: action rejected; update the task and resume.")
-            return False
+            try:
+                changed = json.loads(input("New action arguments as JSON object: "))
+                if not isinstance(changed, dict): raise ValueError("arguments must be an object")
+                action.arguments = changed
+                return input(f"Approve modified {action.name} {changed}? [y/N]: ").strip().lower() in {"yes", "y"}
+            except (ValueError, json.JSONDecodeError) as exc:
+                print(f"Invalid modification: {exc}")
+                return False
         return choice in {"approve", "a", "yes", "y"}
 
     def _registry(self, run_id: str) -> ActionRegistry:
@@ -54,6 +68,8 @@ class AgentRuntime:
         state = self.store.load(resume_id) if resume_id else self.new_state(goal or "")
         state.status = TaskStatus.IN_PROGRESS
         registry = self._registry(state.run_id)
+        if resume_id and state.latest_observation and state.latest_observation.url and state.latest_observation.url.startswith(("http://", "https://")):
+            registry.execute(Action("open_url", {"url": state.latest_observation.url}, "Restore browser checkpoint"), lambda _: True)
         trace_writer = TraceWriter(self.store.run_dir(state.run_id) / "trace.jsonl")
         started = time.monotonic()
         self.store.save(state)
