@@ -5,5 +5,7 @@ __pycache__/
 .pytest_cache/
 runs/
 screenshots/
+artifacts/
+evaluation/results.json
 .idea/
 .vscode/

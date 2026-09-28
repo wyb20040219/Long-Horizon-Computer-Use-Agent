@@ -14,7 +14,11 @@ class FileSystemController:
         candidate = (self.workspace / raw_path).resolve()
         if candidate != self.workspace and self.workspace not in candidate.parents:
             raise PermissionError("Path escapes workspace")
-        if any(candidate == item or item in candidate.parents for item in self.protected):
+        # Ancestor protections (for example the user's home) must not make an
+        # explicitly selected workspace unusable. Only protected entries that
+        # are themselves inside the workspace can further restrict it.
+        protected_inside_workspace = (item for item in self.protected if item == self.workspace or self.workspace in item.parents)
+        if any(candidate == item or item in candidate.parents for item in protected_inside_workspace):
             raise PermissionError("Path is protected")
         return candidate
 
@@ -29,6 +33,8 @@ class FileSystemController:
         try:
             target = self.resolve(path)
             if target.exists() and not overwrite:
+                if target.read_text(encoding="utf-8") == content:
+                    return ActionResult(True, "File already contains requested content", {"path": str(target), "bytes": len(content.encode("utf-8")), "idempotent": True})
                 return ActionResult(False, "Overwrite requires approval", {"approval_required": True}, "file exists")
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")

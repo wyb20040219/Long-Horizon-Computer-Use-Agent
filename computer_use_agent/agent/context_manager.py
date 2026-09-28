@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Any
 
 from ..core.state import AgentState
@@ -19,7 +20,7 @@ class ContextManager:
             "recent_steps": recent,
             "compressed_history": compressed,
             "important_facts": state.important_context,
-            "current_observation": state.latest_observation.__dict__ if hasattr(state.latest_observation, "__dict__") else (str(state.latest_observation) if state.latest_observation else None),
+            "current_observation": asdict(state.latest_observation) if state.latest_observation else None,
         }
         # Bound large textual observations without losing structured plan/state.
         if len(str(context)) > self.max_chars:
