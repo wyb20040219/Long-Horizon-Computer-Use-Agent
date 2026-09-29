@@ -1,4 +1,5 @@
-# Core runtime intentionally uses only the Python standard library.
+# Core configuration dependency; browser and desktop integrations stay optional.
+python-dotenv>=1.0
 # Install optional integrations as needed:
 #   pip install -e ".[browser,desktop,dev]"
 pytest>=8.0

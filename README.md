@@ -85,7 +85,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-The core runtime uses only the standard library. Install optional integrations only when needed:
+The core runtime uses the standard library plus `python-dotenv` for root `.env` loading. Install optional integrations only when needed:
 
 ```bash
 # Real Chromium control

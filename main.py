@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from computer_use_agent.agent.runtime import AgentRuntime
-from computer_use_agent.core.config import AgentConfig
+from computer_use_agent.core.config import AgentConfig, load_project_environment
 from computer_use_agent.evaluation.benchmark import run_benchmark
 
 
@@ -32,6 +32,7 @@ def parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    load_project_environment()
     args = parser().parse_args(); workspace = Path.cwd().resolve()
     if args.benchmark:
         output = run_benchmark(workspace / "computer_use_agent/evaluation/tasks.json", workspace / "evaluation/results.json", workspace)

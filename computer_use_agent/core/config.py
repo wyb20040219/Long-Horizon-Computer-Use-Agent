@@ -4,6 +4,19 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+
+def project_root() -> Path:
+    """Locate the source project root without depending on the process cwd."""
+    return Path(__file__).resolve().parents[2]
+
+
+def load_project_environment(root: Path | None = None) -> bool:
+    """Load a root .env if present while preserving explicit OS variables."""
+    dotenv_path = (root or project_root()).resolve() / ".env"
+    return load_dotenv(dotenv_path=dotenv_path, override=False)
+
 
 @dataclass(slots=True)
 class AgentConfig:

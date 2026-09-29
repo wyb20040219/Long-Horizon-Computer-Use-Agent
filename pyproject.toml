@@ -7,7 +7,7 @@ name = "computer-use-long-horizon-agent"
 version = "0.1.0"
 description = "A reliable, resumable computer-use agent runtime"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["python-dotenv>=1.0"]
 
 [project.optional-dependencies]
 browser = ["playwright>=1.45"]
