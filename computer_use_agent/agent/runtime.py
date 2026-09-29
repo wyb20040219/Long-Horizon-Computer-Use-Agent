@@ -87,6 +87,9 @@ class AgentRuntime:
                 observation = self.browser.observe() if self.browser else None
                 state.latest_observation = observation
                 _ = self.context.build(state)
+                if action.name == "write_file" and observation:
+                    content = str(action.arguments.get("content", ""))
+                    action.arguments["content"] = content.replace("{title}", observation.title or "").replace("{page_text}", observation.page_text).replace("{url}", observation.url or "")
                 result = registry.execute(action, self.approval_handler)
                 after_observation = self.browser.observe() if self.browser else observation
                 state.latest_observation = after_observation

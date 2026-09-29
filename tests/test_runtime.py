@@ -33,3 +33,12 @@ def test_runtime_recovers_from_one_transient_failure(tmp_path):
     assert state.current_step == 4
     assert state.todos[0].retry_count == 1
     assert len(state.failed_actions) == 1
+
+
+def test_runtime_writes_observed_title_and_main_text_to_requested_path(tmp_path):
+    config = AgentConfig(workspace=tmp_path, dry_run=True, auto_approve=True)
+    state = AgentRuntime(config).run(goal="Open https://example.com and save it into workspace/report.txt")
+    output = (tmp_path / "workspace" / "report.txt").read_text(encoding="utf-8")
+    assert state.status == TaskStatus.COMPLETED
+    assert "Example Domain" in output
+    assert "illustrative examples" in output

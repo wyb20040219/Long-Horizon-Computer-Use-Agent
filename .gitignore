@@ -6,6 +6,7 @@ __pycache__/
 runs/
 screenshots/
 artifacts/
+workspace/
 evaluation/results.json
 .idea/
 .vscode/

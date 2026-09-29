@@ -32,3 +32,23 @@ def test_unsafe_llm_plan_falls_back_without_executing_it():
     plan = planner.plan("do something")
     assert all(task.action.name != "shell" for task in plan)
     assert "non-allowlisted" in planner.last_llm_error
+
+
+def test_deterministic_plan_preserves_requested_output_path():
+    plan = TaskPlanner().plan("Open https://example.com and save it into workspace/custom-report.txt")
+    report = next(task for task in plan if task.action.name == "write_file")
+    assert report.action.arguments["path"] == "workspace/custom-report.txt"
+    assert "{title}" in report.action.arguments["content"]
+    assert "{page_text}" in report.action.arguments["content"]
+
+
+def test_llm_plan_cannot_replace_explicit_output_path():
+    payload = {"tasks": [{"id": "save", "description": "save", "dependency": [], "action": {"name": "write_file", "arguments": {"path": "artifacts/wrong.txt", "content": "ok"}}}]}
+    plan = TaskPlanner(FakeClient(payload)).plan("Save result to workspace/requested.txt")
+    assert plan[0].action.arguments["path"] == "workspace/requested.txt"
+
+
+def test_source_url_ending_in_txt_is_not_mistaken_for_output_path():
+    plan = TaskPlanner().plan("Open https://example.com/source.txt and inspect it")
+    report = next(task for task in plan if task.action.name == "write_file")
+    assert report.action.arguments["path"] == "artifacts/result.txt"

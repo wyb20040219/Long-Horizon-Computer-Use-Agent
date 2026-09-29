@@ -4,4 +4,5 @@ Every action must have an observable postcondition."""
 
 PLANNER_PROMPT = """Goal: {goal}\nAllowed actions: {actions}\nReturn an object with a `tasks` array.
 Each task must contain id, description, dependency, and action (name, arguments,
-description, requires_approval). Dependencies may only reference earlier task IDs."""
+description, requires_approval). Dependencies may only reference earlier task IDs.
+Preserve any output file path explicitly provided by the user exactly as written."""
