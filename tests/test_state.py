@@ -11,7 +11,8 @@ def test_dependencies_control_next_subtask():
 
 
 def test_state_round_trip_preserves_enums_and_actions():
-    original = AgentState("run-safe", "goal", [Subtask("a", "first", action=Action("wait", {"seconds": 1}))])
+    original = AgentState("run-safe", "goal", [Subtask("a", "first", action=Action("wait", {"seconds": 1}))], planner_metadata={"planner_backend": "llm", "model": "test-model"})
     restored = AgentState.from_dict(original.to_dict())
     assert restored.todos[0].status == TaskStatus.PENDING
     assert restored.todos[0].action.arguments == {"seconds": 1}
+    assert restored.planner_metadata["planner_backend"] == "llm"

@@ -18,6 +18,7 @@ class AgentState:
     failed_actions: list[dict[str, Any]] = field(default_factory=list)
     retry_count: int = 0
     important_context: dict[str, Any] = field(default_factory=dict)
+    planner_metadata: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
     status: TaskStatus = TaskStatus.PENDING

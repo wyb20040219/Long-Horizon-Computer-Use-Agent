@@ -24,7 +24,7 @@ from ..llm.client import OpenAICompatibleClient
 
 
 class AgentRuntime:
-    def __init__(self, config: AgentConfig, approval_handler: Callable[[Action], bool] | None = None, planner: TaskPlanner | None = None):
+    def __init__(self, config: AgentConfig, approval_handler: Callable[[Action], bool] | None = None, planner: TaskPlanner | None = None, planner_observer: Callable[[dict[str, object]], None] | None = None):
         self.config = config
         self.store = CheckpointStore(config.runs_dir)
         if planner is not None:
@@ -37,6 +37,7 @@ class AgentRuntime:
         self.recovery = RecoveryPolicy(config.max_retries)
         self.context = ContextManager()
         self.approval_handler = approval_handler or self._approve
+        self.planner_observer = planner_observer
         self.browser: BrowserController | None = None
 
     def _approve(self, action: Action) -> bool:
@@ -60,12 +61,15 @@ class AgentRuntime:
 
     def new_state(self, goal: str) -> AgentState:
         run_id = f"run-{uuid.uuid4().hex[:10]}"
-        return AgentState(run_id=run_id, user_goal=goal, todos=self.planner.plan(goal, self.config.dry_run), status=TaskStatus.IN_PROGRESS)
+        todos = self.planner.plan(goal, self.config.dry_run)
+        return AgentState(run_id=run_id, user_goal=goal, todos=todos, planner_metadata=dict(self.planner.last_plan_metadata), status=TaskStatus.IN_PROGRESS)
 
     def run(self, goal: str | None = None, resume_id: str | None = None) -> AgentState:
         if bool(goal) == bool(resume_id):
             raise ValueError("Provide exactly one of goal or resume_id")
         state = self.store.load(resume_id) if resume_id else self.new_state(goal or "")
+        if self.planner_observer:
+            self.planner_observer(dict(state.planner_metadata))
         state.status = TaskStatus.IN_PROGRESS
         registry = self._registry(state.run_id)
         if resume_id and state.latest_observation and state.latest_observation.url and state.latest_observation.url.startswith(("http://", "https://")):
@@ -107,7 +111,7 @@ class AgentRuntime:
                     if decision.value == "retry": task.status = TaskStatus.PENDING
                     elif decision.value == "replan": self.planner.replan(state.todos, task.id)
                     else: task.status = TaskStatus.BLOCKED; state.status = TaskStatus.BLOCKED
-                record = StepTrace(state.current_step, utc_now(), asdict(observation) if observation else {}, f"Execute subtask {task.id}: {task.description}", action.name, action.arguments, asdict(result), asdict(verification), error, (time.monotonic() - before) * 1000)
+                record = StepTrace(state.current_step, utc_now(), asdict(observation) if observation else {}, f"Execute subtask {task.id}: {task.description}", action.name, action.arguments, asdict(result), asdict(verification), error, (time.monotonic() - before) * 1000, dict(state.planner_metadata))
                 trace_writer.append(record); state.execution_history.append(record.to_dict())
                 if state.current_step % self.config.checkpoint_every == 0: self.store.save(state)
                 if state.status == TaskStatus.BLOCKED: break

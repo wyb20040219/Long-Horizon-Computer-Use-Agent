@@ -9,6 +9,16 @@ from computer_use_agent.core.config import AgentConfig
 from computer_use_agent.evaluation.benchmark import run_benchmark
 
 
+def print_planner_metadata(metadata: dict[str, object]) -> None:
+    print(f"Planner backend: {metadata.get('planner_backend', 'unknown')}")
+    if metadata.get("model"):
+        print(f"Model: {metadata['model']}")
+    if metadata.get("llm_latency_ms") is not None:
+        print(f"LLM latency: {metadata['llm_latency_ms']} ms")
+    if metadata.get("fallback_reason"):
+        print(f"Fallback reason: {metadata['fallback_reason']}")
+
+
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(description="Reliable long-horizon computer-use agent")
     group = value.add_mutually_exclusive_group(required=True)
@@ -27,7 +37,7 @@ def main() -> int:
         output = run_benchmark(workspace / "computer_use_agent/evaluation/tasks.json", workspace / "evaluation/results.json", workspace)
         print(json.dumps(output["summary"], indent=2)); return 0
     config = AgentConfig.from_env(workspace=workspace, dry_run=args.dry_run, headless=not args.headed, auto_approve=args.auto_approve)
-    state = AgentRuntime(config).run(goal="Dry-run: verify Example Domain and save the result" if args.dry_run else args.task, resume_id=args.resume)
+    state = AgentRuntime(config, planner_observer=print_planner_metadata).run(goal="Dry-run: verify Example Domain and save the result" if args.dry_run else args.task, resume_id=args.resume)
     print(json.dumps({"run_id": state.run_id, "status": state.status.value, "steps": state.current_step, "completed": state.completed_subtasks, "run_dir": str(config.runs_dir / state.run_id)}, ensure_ascii=False, indent=2))
     return 0 if state.status.value == "completed" else 1
 

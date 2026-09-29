@@ -105,6 +105,7 @@ class StepTrace:
     verifier_result: dict[str, Any]
     error: str | None
     latency_ms: float
+    planner_metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
