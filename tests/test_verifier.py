@@ -53,3 +53,12 @@ def test_verifier_accepts_browser_added_trailing_slash():
         Observation(url="https://example.com/", title="Example Domain", page_text="body"),
     )
     assert check.result == VerificationResult.PASS
+
+
+def test_navigation_rejects_lookalike_subdomain_attack():
+    result = urls_semantically_equal(
+        "https://example.com",
+        "https://example.com.evil.test/",
+    )
+
+    assert not result
